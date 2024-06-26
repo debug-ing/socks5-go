@@ -252,7 +252,7 @@ func main() {
 		switch os.Args[1] {
 		case "adduser":
 			if len(os.Args) != 4 {
-				fmt.Println("Usage: socks5server adduser <username> <password>")
+				fmt.Println("Usage: go run main.go adduser <username> <password> after build you can use ./main adduser <username> <password>")
 				return
 			}
 			loadUsers()
