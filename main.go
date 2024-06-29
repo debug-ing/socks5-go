@@ -110,8 +110,7 @@ func saveTraffic() {
 	if err != nil {
 		log.Fatalf("Failed to marshal traffic: %v", err)
 	}
-
-	if err := ioutil.WriteFile(trafficFile, file, 0600); err != nil {
+	if err := os.WriteFile(trafficFile, file, 0600); err != nil {
 		log.Fatalf("Failed to write traffic file: %v", err)
 	}
 }
