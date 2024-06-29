@@ -245,7 +245,12 @@ func handleConnection(conn net.Conn) {
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
 
-	go io.Copy(targetConn, countingConn)
+	// go io.Copy(targetConn, countingConn)
+	go func() {
+		defer countingConn.Close()
+		defer targetConn.Close()
+		io.Copy(targetConn, countingConn)
+	}()
 	io.Copy(countingConn, targetConn)
 
 	saveTraffic()
