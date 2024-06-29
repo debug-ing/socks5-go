@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"sync"
-	"time"
 )
 
 const (
@@ -105,12 +104,7 @@ func loadTraffic() {
 }
 
 func saveTraffic() {
-	// trafficSaverRWMutex.Lock()
-	for trafficSaverRWMutex.TryLock() == false {
-		//retry
-		time.Sleep(time.Millisecond * 10)
-		return
-	}
+	trafficSaverRWMutex.Lock()
 	defer trafficSaverRWMutex.Unlock()
 	file, err := json.MarshalIndent(TrafficUsage, "", "  ")
 	if err != nil {
@@ -292,7 +286,11 @@ func main() {
 		conn, err := listener.Accept()
 		if err != nil {
 			log.Println("Failed to accept connection:", err)
-			continue
+			if ne, ok := err.(net.Error); ok && ne.Temporary() {
+				continue
+			}
+			log.Fatalf("Permanent error accepting connection: %v", err)
+			return
 		}
 
 		go handleConnection(conn)
