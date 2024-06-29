@@ -106,7 +106,7 @@ func loadTraffic() {
 
 func saveTraffic() {
 	// trafficSaverRWMutex.Lock()
-	if trafficSaverRWMutex.TryLock() == false {
+	for trafficSaverRWMutex.TryLock() == false {
 		//retry
 		time.Sleep(time.Millisecond * 10)
 		return
