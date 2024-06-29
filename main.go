@@ -251,6 +251,7 @@ func handleConnection(conn net.Conn) {
 		defer targetConn.Close()
 		io.Copy(targetConn, countingConn)
 	}()
+	defer countingConn.Close()
 	io.Copy(countingConn, targetConn)
 
 	saveTraffic()
