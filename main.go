@@ -23,11 +23,12 @@ const (
 )
 
 var (
-	Users        = map[string]string{}
-	TrafficUsage = map[string]int64{}
-	trafficMutex = sync.Mutex{}
-	usersFile    = "users.json"
-	trafficFile  = "traffic.json"
+	Users               = map[string]string{}
+	TrafficUsage        = map[string]int64{}
+	trafficMutex        = sync.Mutex{}
+	trafficSaverRWMutex = sync.RWMutex{}
+	usersFile           = "users.json"
+	trafficFile         = "traffic.json"
 )
 
 type countingConn struct {
@@ -86,6 +87,8 @@ func saveUsers() {
 }
 
 func loadTraffic() {
+	trafficSaverRWMutex.RLock()
+	defer trafficSaverRWMutex.RUnlock()
 	file, err := ioutil.ReadFile(trafficFile)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -101,6 +104,8 @@ func loadTraffic() {
 }
 
 func saveTraffic() {
+	trafficSaverRWMutex.Lock()
+	defer trafficSaverRWMutex.Unlock()
 	file, err := json.MarshalIndent(TrafficUsage, "", "  ")
 	if err != nil {
 		log.Fatalf("Failed to marshal traffic: %v", err)
