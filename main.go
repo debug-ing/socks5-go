@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 const (
@@ -104,13 +105,18 @@ func loadTraffic() {
 }
 
 func saveTraffic() {
-	trafficSaverRWMutex.Lock()
+	// trafficSaverRWMutex.Lock()
+	if trafficSaverRWMutex.TryLock() == false {
+		//retry
+		time.Sleep(time.Millisecond * 10)
+		return
+	}
 	defer trafficSaverRWMutex.Unlock()
 	file, err := json.MarshalIndent(TrafficUsage, "", "  ")
 	if err != nil {
 		log.Fatalf("Failed to marshal traffic: %v", err)
 	}
-	if err := os.WriteFile(trafficFile, file, 0600); err != nil {
+	if err := ioutil.WriteFile(trafficFile, file, 0600); err != nil {
 		log.Fatalf("Failed to write traffic file: %v", err)
 	}
 }
