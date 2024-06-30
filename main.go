@@ -251,28 +251,35 @@ func handleConnection(conn net.Conn) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	var once sync.Once
+	closeConns := func() {
+		once.Do(func() {
+			countingConn.Close()
+			targetConn.Close()
+		})
+	}
+
 	errCh := make(chan error, 1)
 	go func() {
-		defer countingConn.Close()
-		defer targetConn.Close()
+		defer closeConns()
 		io.Copy(targetConn, countingConn)
 	}()
 
 	go func() {
-		defer countingConn.Close()
-		defer targetConn.Close()
+		defer closeConns()
 		_, err := io.Copy(countingConn, targetConn)
 		errCh <- err
 	}()
 	// io.Copy(countingConn, targetConn)
-
 	select {
 	case <-ctx.Done():
 		log.Println("Connection timed out")
+		closeConns()
 	case err := <-errCh:
 		if err != nil && err != io.EOF {
 			log.Println("Connection error:", err)
 		}
+		closeConns()
 	}
 
 	saveTraffic()
