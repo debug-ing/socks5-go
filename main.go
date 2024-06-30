@@ -182,7 +182,7 @@ func handleConnection(conn net.Conn) {
 	conn.Write([]byte{1, 0}) // Authentication successful
 
 	countingConn := &countingConn{conn: conn, user: username}
-
+	defer countingConn.Close()
 	if _, err := io.ReadFull(countingConn, buf[:4]); err != nil {
 		log.Println("Failed to read request header:", err)
 		return
@@ -236,22 +236,19 @@ func handleConnection(conn net.Conn) {
 	addr = net.JoinHostPort(addr, fmt.Sprintf("%d", port))
 
 	targetConn, err := net.Dial("tcp", addr)
+	defer targetConn.Close()
 	if err != nil {
 		log.Println("Failed to connect to target:", err)
 		countingConn.Write([]byte{socksVersion, 5})
 		return
 	}
-	defer targetConn.Close()
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
-
-	// go io.Copy(targetConn, countingConn)
 	go func() {
 		defer countingConn.Close()
 		defer targetConn.Close()
 		io.Copy(targetConn, countingConn)
 	}()
-	defer countingConn.Close()
 	io.Copy(countingConn, targetConn)
 
 	saveTraffic()
