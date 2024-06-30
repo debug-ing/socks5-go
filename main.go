@@ -236,12 +236,13 @@ func handleConnection(conn net.Conn) {
 	addr = net.JoinHostPort(addr, fmt.Sprintf("%d", port))
 
 	targetConn, err := net.Dial("tcp", addr)
-	defer targetConn.Close()
+
 	if err != nil {
 		log.Println("Failed to connect to target:", err)
 		countingConn.Write([]byte{socksVersion, 5})
 		return
 	}
+	defer targetConn.Close()
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
 	go func() {
