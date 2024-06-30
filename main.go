@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"net"
 	"os"
 	"sync"
+	"time"
 )
 
 const (
@@ -245,12 +247,33 @@ func handleConnection(conn net.Conn) {
 	defer targetConn.Close()
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	defer cancel()
+
+	errCh := make(chan error, 1)
 	go func() {
 		defer countingConn.Close()
 		defer targetConn.Close()
 		io.Copy(targetConn, countingConn)
 	}()
-	io.Copy(countingConn, targetConn)
+
+	go func() {
+		defer countingConn.Close()
+		defer targetConn.Close()
+		_, err := io.Copy(countingConn, targetConn)
+		errCh <- err
+	}()
+	// io.Copy(countingConn, targetConn)
+
+	select {
+	case <-ctx.Done():
+		log.Println("Connection timed out")
+	case err := <-errCh:
+		if err != nil && err != io.EOF {
+			log.Println("Connection error:", err)
+		}
+	}
 
 	saveTraffic()
 }
