@@ -248,7 +248,7 @@ func handleConnection(conn net.Conn) {
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	errCh := make(chan error, 1)
