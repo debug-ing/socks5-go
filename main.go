@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -9,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -125,7 +125,9 @@ func addUser(username, password string) {
 func handleConnection(conn net.Conn) {
 	defer conn.Close()
 
-	buf := make([]byte, 256)
+	// buf := make([]byte, 32768)
+	buf := make([]byte, 1024*1024)
+	// buf := []byte
 	if _, err := io.ReadFull(conn, buf[:2]); err != nil {
 		log.Println("Failed to read version and nMethods:", err)
 		return
@@ -248,39 +250,82 @@ func handleConnection(conn net.Conn) {
 
 	countingConn.Write([]byte{socksVersion, 0, 0, addrIPv4, 0, 0, 0, 0, 0, 0})
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+	// ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	// defer cancel()
 
-	var once sync.Once
+	// var once sync.Once
 	closeConns := func() {
-		once.Do(func() {
-			countingConn.Close()
-			targetConn.Close()
-		})
+		// once.Do(func() {
+		countingConn.Close()
+		targetConn.Close()
+		// })
 	}
 
-	errCh := make(chan error, 1)
+	// errCh := make(chan error, 1)
 	go func() {
+		// defer closeConns()
 		defer closeConns()
-		io.Copy(targetConn, countingConn)
+		_, err := io.CopyBuffer(targetConn, countingConn, buf)
+		if err != nil {
+			log.Println("Error copying from countingConn to targetConn:", err)
+		}
+
+		// io.Copy(targetConn, countingConn)
+		// io.wri
+		// n, readErr := targetConn.Read(buf)
+		// if n > 0 {
+		// 	_, writeErr := countingConn.Write(buf[:n])
+		// 	if writeErr != nil {
+		// 		// Handling write error
+		// 		fmt.Println("Error writing to targetConn:", writeErr)
+		// 		return
+		// 	}
+		// }
+		// if readErr != nil {
+		// 	if readErr != io.EOF {
+		// 		// Handling read error
+		// 		fmt.Println("Error reading from countingConn:", readErr)
+		// 	}
+		// 	return
+		// }
 	}()
 
-	go func() {
+	func() {
 		defer closeConns()
-		_, err := io.Copy(countingConn, targetConn)
-		errCh <- err
+		_, err := io.CopyBuffer(countingConn, targetConn, buf)
+		if err != nil {
+			log.Println("Error copying from targetConn to countingConn:", err)
+		}
+		// _, _ = io.Copy(countingConn, targetConn)
+		// n, readErr := targetConn.Read(buf)
+		// if n > 0 {
+		// 	_, writeErr := countingConn.Write(buf[:n])
+		// 	if writeErr != nil {
+		// 		// Handling write error
+		// 		fmt.Println("Error writing to targetConn:", writeErr)
+		// 		return
+		// 	}
+		// }
+		// if readErr != nil {
+		// 	if readErr != io.EOF {
+		// 		// Handling read error
+		// 		fmt.Println("Error reading from countingConn:", readErr)
+		// 	}
+		// 	return
+		// }
+		// errCh <- err
 	}()
 	// io.Copy(countingConn, targetConn)
-	select {
-	case <-ctx.Done():
-		log.Println("Connection timed out")
-		closeConns()
-	case err := <-errCh:
-		if err != nil && err != io.EOF {
-			log.Println("Connection error:", err)
-		}
-		closeConns()
-	}
+	// select {
+	// case <-ctx.Done():
+	// 	log.Println("Connection timed out")
+	// 	closeConns()
+	// case err := <-errCh:
+	// 	if err != nil && err != io.EOF {
+	// 		log.Println("Connection error:", err)
+	// 	}
+	// 	closeConns()
+	// }
 
 	saveTraffic()
 }
@@ -313,6 +358,13 @@ func main() {
 		log.Fatalf("Failed to bind to port 1080: %v", err)
 	}
 	defer listener.Close()
+
+	go func() {
+		for {
+			fmt.Printf("Active Goroutines: %d\n", runtime.NumGoroutine())
+			time.Sleep(5 * time.Second)
+		}
+	}()
 
 	log.Println("SOCKS5 server listening on port 1080")
 
