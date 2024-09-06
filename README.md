@@ -52,3 +52,4 @@ and you can open traffic.json and show users traffic :)
 - [ ] Add UDP support
 - [ ] Add a monitoring tool to check the health and status of the application.
 - [ ] Add a docker compose file
+- [ ] Add Api for report user traffic
