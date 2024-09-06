@@ -1,3 +1,9 @@
+### Socs5 Proxy Server
+
+SOCKS Protocol Version 5
+
+TCP and IPv4/IPv6 support
+
 ## Run Proxy Server
 
 ```bash
