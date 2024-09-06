@@ -47,3 +47,8 @@ $ go run main.go showtraffic
 
 and you can open traffic.json and show users traffic :)
 
+## Missing features
+- [ ] Add Unit tests.
+- [ ] Add UDP support
+- [ ] Add a monitoring tool to check the health and status of the application.
+- [ ] Add a docker compose file
