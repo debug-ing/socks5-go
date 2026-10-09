@@ -1,0 +1,19 @@
+
+servers:
+  - name: socks-main
+    port: 1080
+    type: socks5
+    auth:
+      status: true
+      users:
+        - username: admin
+          password: "admin"
+        - username: user1
+          password: "password1"
+
+  - name: socks-secondary
+    port: 1081
+    type: socks5
+    auth:
+      status: false
+      users: []

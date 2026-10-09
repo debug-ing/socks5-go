@@ -14,31 +14,37 @@ var (
 )
 
 type Config struct {
-	Port int
-	Auth Auth
+	Servers []Server `yaml:"servers"`
+}
+
+type Server struct {
+	Name string `yaml:"name"`
+	Port int    `yaml:"port"`
+	Type string `yaml:"type"`
+	Auth Auth   `yaml:"auth"`
 }
 
 type Auth struct {
-	Status bool
-	Users  []Users
+	Status bool    `yaml:"status"`
+	Users  []Users `yaml:"users"`
 }
 
 type Users struct {
-	Username string
-	Password string
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func LoadConfig(path string) (*Config, error) {
 	once.Do(func() {
-		var data []byte
-		data, err := os.ReadFile(path)
-		if err != nil {
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			err = readErr
 			return
 		}
 
 		var c Config
-		err = yaml.Unmarshal(data, &c)
-		if err != nil {
+		if unmarshalErr := yaml.Unmarshal(data, &c); unmarshalErr != nil {
+			err = unmarshalErr
 			return
 		}
 
