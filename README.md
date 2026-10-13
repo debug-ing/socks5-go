@@ -1,6 +1,6 @@
 # Proxy Server
 
-A proxy server written in Go, currently supporting SOCKS5.
+A proxy server written in Go, currently supporting SOCKS5,SOCKS4.
 
 ## Configuration
 
@@ -16,9 +16,15 @@ Example configuration:
 
 ```yaml
 servers:
+  - name: socks4
+    port: 1079
+    type: socks4
+    auth:
+      status: false
+      users: []
   - name: socks5-main
     port: 1080
-    type: socks5
+    type: socks5 
     auth:
       status: true
       users:
@@ -32,7 +38,7 @@ servers:
 | ------------- | ----------------------------------------- |
 | `name`        | Server instance name                      |
 | `port`        | Port to listen on                         |
-| `type`        | Proxy protocol (`socks5`)                 |
+| `type`        | Proxy protocol (`socks5`,`socks4`)                 |
 | `auth.status` | Enable or disable password authentication |
 | `auth.users`  | List of usernames and passwords           |
 
@@ -84,4 +90,10 @@ With username/password authentication:
 curl --proxy socks5h://127.0.0.1:1080 \
      --proxy-user admin:123456 \
      https://example.com
+```
+
+Test the SOCKS4 proxy with `curl`:
+
+```bash
+curl --socks4 127.0.0.1:1080 https://example.com
 ```
